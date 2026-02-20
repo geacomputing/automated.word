@@ -9,6 +9,10 @@ from datetime import datetime             # To get current date/time
 import platform                            # To get OS and system info
 import getpass                             # To get current user name
 
+
+import pandas as pd
+import random
+
 # ---------------------------------------------------------
 # User-configurable variables
 # ---------------------------------------------------------
@@ -18,6 +22,20 @@ label_step = 10                            # Show every Nth label on x-axis of p
 lastN_crypto = 10                          # Number of last entries to show in Bitcoin table
 lastN_git = 100                            # Number of latest git commits to include in Git table
 repo_path = "../"                          # Path to your local Git repository (for git log)
+
+
+
+# Predefined phrases to mix in for variation
+phrases = [
+    "The signal shows expected behavior under simulated conditions.",
+    "Minor variations are observed due to synthetic noise.",
+    "Data illustrates the upper and lower signal bounds clearly.",
+    "Clean signal follows a sinusoidal pattern with drift.",
+    "This plot is generated for demonstration purposes."
+]
+
+
+
 
 # ---------------------------------------------------------
 # Create output folders if they do not exist
@@ -191,6 +209,83 @@ for date, price in zip(dates[-lastN_crypto:], prices[-lastN_crypto:]):
 table_caption = doc.add_paragraph(f"Table 2: Last {lastN_crypto} Bitcoin prices.")
 table_caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
 table_caption.style = "Caption"
+
+
+
+# ---------------------------------------------------------
+# Page break
+# ---------------------------------------------------------
+doc.add_page_break()
+
+
+
+
+# ---------------------------------------------------------
+# Path to synthetic Excel files
+# ---------------------------------------------------------
+synthetic_folder = "../data/Lab_results/experiment1"  # adjust as needed
+
+# List all Excel files in the folder, sorted
+excel_files = sorted([f for f in os.listdir(synthetic_folder) if f.endswith(".xlsx")])
+
+# Loop through each file and generate a plot + insert in Word
+for i, filename in enumerate(excel_files, start=1):
+    file_path = os.path.join(synthetic_folder, filename)
+    
+    # Read Excel file into a DataFrame
+    df = pd.read_excel(file_path)
+    
+    # Generate plot
+    plt.figure(figsize=(8,4))
+    plt.plot(df["Time (s)"], df["Clean Signal"], label="Clean", color="blue", linewidth=1.5)
+    plt.plot(df["Time (s)"], df["Lower Signal"], label="Lower", linestyle="--", color="red", linewidth=1)
+    plt.plot(df["Time (s)"], df["Upper Signal"], label="Upper", linestyle="--", color="green", linewidth=1)
+    plt.title(f"Synthetic Data: {filename}", fontsize=12)
+    plt.xlabel("Time (s)")
+    plt.ylabel("Signal Value")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    
+    # Save plot to images folder
+    plot_file = os.path.join(images_folder, f"{filename.replace('.xlsx','.png')}")
+    plt.savefig(plot_file, dpi=200)
+    plt.close()
+    
+    # Insert plot into Word document
+    doc.add_heading(f"Synthetic Experiment {i}", level=1)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run()
+    run.add_picture(plot_file, width=Inches(6))
+    
+    # Caption for the figure
+    caption = doc.add_paragraph(f"Figure {i+1}: Signals from {filename}")
+    caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    caption.style = "Caption"
+    
+    
+    
+    if True: 
+        # Dynamic descriptive text
+        random_phrase = random.choice(phrases)  # Pick a slightly different phrase each time
+        description = doc.add_paragraph(
+            f"Experiment {i}: {random_phrase} This description corresponds to the dataset '{filename}'."
+        )
+        description.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    
+    # Optional: page break between experiments
+    doc.add_page_break()
+
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------
 # Save the Word document
