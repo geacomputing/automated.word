@@ -1,14 +1,14 @@
 import os
 import numpy as np
 import pandas as pd
-
+from pathlib import Path
 # ------------------------------------------------------------
 # BASE DIR = project root (relative path)
 # ------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_FOLDER = os.path.join(BASE_DIR, "data", "Lab_results", "experiment1")
 
-N_FILES = 10
+N_FILES = 3
 N_POINTS = 200
 
 os.makedirs(DATA_FOLDER, exist_ok=True)
