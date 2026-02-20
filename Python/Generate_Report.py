@@ -14,7 +14,7 @@ import getpass
 # -------------------------
 output_folder = "../reports"
 ndays = 10       # Number of days for crypto data
-label_step = 2   # Reduce x-axis labels
+label_step = 10   # Reduce x-axis labels
 lastN_crypto = 10   # Last N rows for crypto table
 lastN_git = 100      # Last N git commits
 repo_path = "../"    # Path to your local git repo
@@ -27,7 +27,13 @@ os.makedirs(output_folder, exist_ok=True)
 # Paths
 docx_filename = "dynamic_report.docx"
 docx_path = os.path.join(output_folder, docx_filename)
-plot_path = os.path.join(output_folder, "temp_plot.png")
+
+images_folder = "../images"
+os.makedirs(images_folder, exist_ok=True)
+
+
+plot_filename = f"bitcoin_last{ndays}.png"
+plot_path = os.path.join(images_folder, plot_filename)
 
 # -------------------------
 # Fetch crypto data
@@ -45,7 +51,7 @@ dates = [datetime.fromtimestamp(ts/1000).strftime("%m-%d %H") for ts in timestam
 # Generate crypto plot
 # -------------------------
 plt.figure(figsize=(10,5))
-plt.plot(dates, prices, marker='o', linestyle='-', color='orange', linewidth=2)
+plt.plot(dates, prices, marker='.', linestyle='-', color='orange', linewidth=1)
 plt.xticks(dates[::label_step], rotation=45)
 plt.title(f"Bitcoin Price (Last {ndays} Days)", fontsize=16)
 plt.xlabel("Date", fontsize=12)
@@ -106,22 +112,25 @@ doc.add_page_break()
 # Git log table on first page
 # -------------------------
 doc.add_heading("Git Repository Log", level=1)
-doc.add_paragraph("This section contains the document versioning log, captured from github. All entries are up to date.")
+doc.add_paragraph(
+    f"This section contains the document versioning log captured from GitHub. "
+    f"All entries are current and complete as of the report generation date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}."
+)
+
 doc.add_heading(f"Last {lastN_git} commits from repository '{repo_path}'", level=2)
 
-git_table = doc.add_table(rows=1, cols=4)
+git_table = doc.add_table(rows=1, cols=3)
 git_table.style = "Table Grid"
-git_table.rows[0].cells[0].text = "Commit Hash"
-git_table.rows[0].cells[1].text = "Author"
-git_table.rows[0].cells[2].text = "Date"
-git_table.rows[0].cells[3].text = "Message"
+
+git_table.rows[0].cells[0].text = "Author"
+git_table.rows[0].cells[1].text = "Date"
+git_table.rows[0].cells[2].text = "Message"
 
 for c in commits:
     row_cells = git_table.add_row().cells
-    row_cells[0].text = c["hash"]
-    row_cells[1].text = c["author"]
-    row_cells[2].text = c["date"]
-    row_cells[3].text = c["message"]
+    row_cells[0].text = c["author"]
+    row_cells[1].text = c["date"]
+    row_cells[2].text = c["message"]
 
 git_caption = doc.add_paragraph(f"Table 1: Last {lastN_git} commits in repository '{repo_path}'")
 git_caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -165,6 +174,6 @@ table_caption.style = "Caption"
 # Save document and cleanup
 # -------------------------
 doc.save(docx_path)
-os.remove(plot_path)
+
 print(f"Dynamic report created successfully: {docx_path}")
 
